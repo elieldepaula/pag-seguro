@@ -44,6 +44,7 @@ class PagSeguro
         7 => 'Cancelada'
     );
     private $config_botao = array();
+    private $ps_reference = '';
 
     /**
      * Seta os dados da credencial da conta do PagSeguro.
@@ -62,7 +63,7 @@ class PagSeguro
             throw new Exception('As credenciais não podemm ficar em branco..');
         }
 
-        if ($this->sandbox == TRUE) {
+        if ($sandbox == TRUE) {
             $this->ps_url = 'sandbox.pagseguro.uol.com.br';
         } else {
             $this->ps_url = 'pagseguro.uol.com.br';
@@ -71,7 +72,7 @@ class PagSeguro
         $this->ps_email = $dados['email'];
         $this->ps_token = $dados['token'];
     }
-    
+
     /**
      * Recebe e prapara dados do usuário... opcional
      * @param array $data
@@ -153,7 +154,7 @@ class PagSeguro
     }
 
     /**
-     * Retorna array com o número do pedido (extrato) e o status. 
+     * Retorna array com o número do pedido (extrato) e o status.
      * Fonte: PagSeguro.
      * Retorno:
      *  array
@@ -240,7 +241,7 @@ class PagSeguro
             CURLOPT_HEADER => false,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_CONNECTpagseguro_timeout => $pagseguro_timeout,
-                //CURLOPT_pagseguro_timeout => $pagseguro_timeout
+            //CURLOPT_pagseguro_timeout => $pagseguro_timeout
         );
         $options = ($options + $methodOptions);
 
@@ -253,7 +254,7 @@ class PagSeguro
         curl_close($curl);
 
         if ($error) {
-                throw new Exception("CURL não pode conectar: $errorMessage");
+            throw new Exception("CURL não pode conectar: $errorMessage");
         } else {
             return $resp;
         }
@@ -296,8 +297,8 @@ class PagSeguro
         // primeira coisa, parsear as config_botaourações
         $this->configButton($config_botao);
 
-        if ($this->reference === FALSE && !is_numeric($this->reference)) {
-            return '<!-- Erro ao gerar botão -->';
+        if ($this->ps_reference === FALSE && !is_numeric($this->ps_reference)) {
+            return 'Erro ao gerar o botão: Linha 299.';
         }
 
         $button = $this->getFormOpen();
@@ -308,7 +309,7 @@ class PagSeguro
         }
 
         if ($this->getProductsInputs() === FALSE) {
-            return '<!-- Erro ao gerar botão -->';
+            return 'Erro ao gerar o botão: Linha 310';
         }
 
         $button .= $this->getProductsInputs();
@@ -465,7 +466,7 @@ class PagSeguro
         $f[] = '<input type="hidden" name="currency" value="BRL">';
         $f[] = '<input type="hidden" name="encoding" value="UTF-8">';
         //<!-- Código de referência do pagamento no sistema (opcional) -->  
-        $f[] = '<input type="hidden" name="reference" value="' . $this->reference . '">';
+        $f[] = '<input type="hidden" name="reference" value="' . $this->ps_reference . '">';
 
         return implode("\n", $f);
     }
@@ -478,7 +479,7 @@ class PagSeguro
     {
         $f = array();
         //<!-- submit do form (obrigatório) -->  
-        $f[] = '<input type="image" class="btn-pagseuro" name="submit" src="' . $this->button . '" alt="Pague com PagSeguro">';
+        $f[] = '<input type="image" class="btn-pagseuro" name="submit" src="' . $this->ps_imgbotao . '" alt="Pague com PagSeguro">';
         $f[] = '</form>';
         return implode("\n", $f);
     }
