@@ -1,6 +1,7 @@
 <?php
 
 namespace elieldepaula\pagseguro;
+use SebastianBergmann\Exporter\Exception;
 
 /**
  * Description of PagSeguro
@@ -33,7 +34,7 @@ class PagSeguro
         'uf' => '',
         'pais' => 'BRA'
     );
-    private $status = array(
+    private $ps_status = array(
         0 => 'desconhecido',
         1 => 'Aguardando pagamento',
         2 => 'Em análise',
@@ -72,7 +73,7 @@ class PagSeguro
         $this->ps_email = $dados['email'];
         $this->ps_token = $dados['token'];
     }
-
+    
     /**
      * Recebe e prapara dados do usuário... opcional
      * @param array $data
@@ -146,53 +147,39 @@ class PagSeguro
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HEADER, false);
 //        curl_setopt($curl, CURLOPT_HTTPHEADER, Array("Content-Type: application/xml; charset=ISO-8859-1"))
-        curl_setopt($curl, CURLOPT_pagseguro_timeout, 30);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 30);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
         $result = trim(curl_exec($curl));
         curl_close($curl);
         return $result;
     }
 
-    /**
-     * Retorna array com o número do pedido (extrato) e o status.
-     * Fonte: PagSeguro.
-     * Retorno:
-     *  array
-     *      'code' => 3
-     *      'status' => 'Paga'
-     *      'reference' => 107
-     * @param string $code
-     * @return array
-     */
     public function getNotification($code = NULL)
     {
 
-        // se não for passado um código, usará o $_POST que o PS envia
-        if ($code === NULL) {
+        // No caso de não receber nenhum codigo ele usa o POST enviado pelo PagSeguro.
+        if ($code === NULL)
             $code = $_POST['notificationCode'];
-        }
 
-        $url = "https://ws." . $this->ps_url . "/v2/transactions/notifications/";
-        $url .= $code . "?email=" . $this->ps_email . "&token=" . $this->ps_token;
-
-        // faz conexão
+        $url = 'https://ws.' . $this->ps_url . '/v2/transactions/' . $code . '?email=' . $this->ps_email . '&token=' . $this->ps_token;
         $transaction = $this->curlConnection($url);
 
-        // algo deu errado na autenticação
-        if ($transaction == 'Unauthorized') {
-            log_message('erro', 'Notificação PagSeguro com problemas.');
-            return FALSE;
-        }
+        // Transação não autorizada.
+        if ($transaction == 'Unauthorized')
+            throw new Exception('Notificação PagSeguro com problemas.');
 
-        // converte para objeto
+        // Converte o XML para objeto.
         $xml = simplexml_load_string($transaction);
 
-        // retorna
-        return array(
-            'code' => (int) $xml->status,
+        // Monta o array de resposta.
+        $result = array(
+            'code' => $xml->code,
             'status' => $this->getStatus((int) $xml->status),
-            'reference' => (int) $xml->reference
+            'reference' => $xml->reference
         );
+
+        return $result;
+
     }
 
     /**
@@ -214,7 +201,7 @@ class PagSeguro
      * @param type $charset ISO
      * @return array
      */
-    private function curlConnection($url, $method = 'GET', Array $data = null, $pagseguro_timeout = 30, $charset = 'UTF-8')
+    private function curlConnection($url, $method = 'GET', Array $data = null, $pagseguro_timeout = 30, $charset = 'ISO-8859-1')
     {
 
         if (strtoupper($method) === 'POST') {
@@ -240,8 +227,8 @@ class PagSeguro
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => false,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_CONNECTpagseguro_timeout => $pagseguro_timeout,
-            //CURLOPT_pagseguro_timeout => $pagseguro_timeout
+            CURLOPT_CONNECTTIMEOUT => $pagseguro_timeout,
+            //CURLOPT_TIMEOUT => $pagseguro_timeout
         );
         $options = ($options + $methodOptions);
 
@@ -254,7 +241,7 @@ class PagSeguro
         curl_close($curl);
 
         if ($error) {
-            throw new Exception("CURL não pode conectar: $errorMessage");
+                throw new Exception("CURL não pode conectar: $errorMessage");
         } else {
             return $resp;
         }
