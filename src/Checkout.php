@@ -2,11 +2,11 @@
 namespace elieldepaula\pagseguro;
 
 /**
- * Description of PagSeguro
+ * Description of Checkout
  *
  * @author elieldepaula
  */
-class PagSeguro
+class Checkout
 {
-    //put your code here.
+    //put your code here
 }
