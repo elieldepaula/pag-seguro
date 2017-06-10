@@ -1,0 +1,21 @@
+{
+    "name": "elieldepaula/pagseguro",
+    "description": "Uma biblioteca alternativa para integração de pagamento padrão do PagSeguro.",
+    "type": "library",
+    "require": {
+        "php": ">=5.6.*"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Eliel de Paula",
+            "email": "elieldepaula@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "elieldepaula\\pagseguro\\": "src"
+        }
+    }
+}
