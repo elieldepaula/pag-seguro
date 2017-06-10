@@ -15,5 +15,5 @@ namespace elieldepaula\pagseguro;
  */
 class PagSeguro
 {
-    //put your code here
+    //put your code here.
 }
