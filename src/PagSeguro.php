@@ -1,6 +1,7 @@
 <?php
 
 namespace elieldepaula\pagseguro;
+
 use SebastianBergmann\Exporter\Exception;
 
 /**
@@ -13,12 +14,11 @@ class PagSeguro
 
     private $ps_email = '';
     private $ps_token = '';
-    private $ps_sandbox = TRUE;
     private $ps_url = 'sandbox.pagseguro.uol.com.br';
     private $ps_imgbotao = 'https://p.simg.uol.com.br/out/pagseguro/i/botoes/pagamentos/164x37-pagar-assina.gif';
     private $ps_cart = false;
     private $ps_timeout = 30;
-    private $this_user = array(
+    private $ps_customer = array(
         'id' => false,
         'nome' => false,
         'ddd' => false, // só números
@@ -44,7 +44,7 @@ class PagSeguro
         6 => 'Devolvida',
         7 => 'Cancelada'
     );
-    private $config_botao = array();
+    private $ps_confbotao = array();
     private $ps_reference = '';
 
     /**
@@ -53,18 +53,16 @@ class PagSeguro
      * @param bool $sandbox Define se usa ou não o sandbox.
      * @throws Exception
      */
-    public function setCredentials($dados = array(), $sandbox = TRUE)
+    public function setCredentials($dados = array(), $sandbox = true)
     {
 
-        if (!is_array($dados)) {
+        if (!is_array($dados))
             throw new Exception('As credenciais devem ser informadas como array.');
-        }
 
-        if ((count($dados) <= 0) or ( $dados['email'] === '') or ( $dados['token'] === '')) {
+        if ((count($dados) <= 0) or ( $dados['email'] === '') or ( $dados['token'] === ''))
             throw new Exception('As credenciais não podemm ficar em branco..');
-        }
 
-        if ($sandbox == TRUE) {
+        if ($sandbox == true) {
             $this->ps_url = 'sandbox.pagseguro.uol.com.br';
         } else {
             $this->ps_url = 'pagseguro.uol.com.br';
@@ -73,7 +71,21 @@ class PagSeguro
         $this->ps_email = $dados['email'];
         $this->ps_token = $dados['token'];
     }
-    
+
+    /**
+     * Informa a referência da venda.
+     * 
+     * @param int $reference Código de referência da venda.
+     * @throws Exception Caso a referência fique em branco.
+     */
+    public function setReference(int $reference = null)
+    {
+        if ($reference == null)
+            throw new Exception('A referência não pode ficar em branco.');
+
+        $this->ps_reference = $reference;
+    }
+
     /**
      * Recebe e prapara dados do usuário... opcional
      * @param array $data
@@ -84,13 +96,36 @@ class PagSeguro
 
         $data = $this->customerParser($data);
 
-        foreach ($this->this_user as $key => $val)
+        foreach ($this->ps_customer as $key => $val)
         {
 
             if (isset($data[$key])) {
-                $this->this_user[$key] = $data[$key];
+                $this->ps_customer[$key] = $data[$key];
             }
         }
+    }
+
+    /**
+     * Recebe o array com um produto, ou array multi com vários
+     * Campos:
+     *      id
+     *      descricao
+     *      valor
+     *      quantidade
+     *      peso
+     * @param array $product_array
+     */
+    public function setProducts($product_array)
+    {
+
+        if (!is_array($product_array))
+            throw new Exception('Nenhum produto foi informado.');
+
+        // Verifica se é um único array ou vários.
+        if (isset($product_array[0]) && is_array($product_array[0]))
+            $this->ps_cart = $product_array;
+        else
+            $this->ps_cart = array($product_array);
     }
 
     /**
@@ -99,7 +134,7 @@ class PagSeguro
      */
     public function getCustomer()
     {
-        return $this->this_user;
+        return $this->ps_customer;
     }
 
     /**
@@ -179,7 +214,6 @@ class PagSeguro
         );
 
         return $result;
-
     }
 
     /**
@@ -228,7 +262,7 @@ class PagSeguro
             CURLOPT_HEADER => false,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_CONNECTTIMEOUT => $pagseguro_timeout,
-            //CURLOPT_TIMEOUT => $pagseguro_timeout
+                //CURLOPT_TIMEOUT => $pagseguro_timeout
         );
         $options = ($options + $methodOptions);
 
@@ -241,7 +275,7 @@ class PagSeguro
         curl_close($curl);
 
         if ($error) {
-                throw new Exception("CURL não pode conectar: $errorMessage");
+            throw new Exception("CURL não pode conectar: $errorMessage");
         } else {
             return $resp;
         }
@@ -262,7 +296,7 @@ class PagSeguro
             $data = array($data);
         }
 
-        foreach ($this->config_botao as $chv => $vlr)
+        foreach ($this->ps_confbotao as $chv => $vlr)
         {
 
             if (isset($data[$chv])) {
@@ -284,20 +318,18 @@ class PagSeguro
         // primeira coisa, parsear as config_botaourações
         $this->configButton($config_botao);
 
-        if ($this->ps_reference === FALSE && !is_numeric($this->ps_reference)) {
-            return 'Erro ao gerar o botão: Linha 299.';
-        }
+        if ($this->ps_reference === FALSE && !is_numeric($this->ps_reference))
+            throw new Exception('Erro ao gerar o botão: Linha 315');
 
         $button = $this->getFormOpen();
 
         // opcional
-        if ($this->this_user['nome']) {
+        //if ($this->ps_customer['nome']) {
             $button .= $this->getUserInputs();
-        }
+        //}
 
-        if ($this->getProductsInputs() === FALSE) {
-            return 'Erro ao gerar o botão: Linha 310';
-        }
+        if ($this->getProductsInputs() === FALSE)
+            throw new Exception('Erro ao gerar o botão: Linha 315');
 
         $button .= $this->getProductsInputs();
         $button .= $this->getFormClose();
@@ -358,51 +390,23 @@ class PagSeguro
     {
         $f = array();
         // '<!-- Dados do comprador (opcionais) -->  
-        $f[] = '<input type="hidden" name="senderName" value="' . $this->this_user['nome'] . '">';
-        $f[] = '<input type="hidden" name="senderAreaCode" value="' . $this->this_user['ddd'] . '">';
-        $f[] = '<input type="hidden" name="senderPhone" value="' . $this->this_user['telefone'] . '">';
-        $f[] = '<input type="hidden" name="senderEmail" value="' . $this->this_user['email'] . '">';
+        if($this->ps_customer['nome'])$f[] = '<input type="hidden" name="senderName" value="' . $this->ps_customer['nome'] . '">';
+        if($this->ps_customer['ddd'])$f[] = '<input type="hidden" name="senderAreaCode" value="' . $this->ps_customer['ddd'] . '">';
+        if($this->ps_customer['telefone'])$f[] = '<input type="hidden" name="senderPhone" value="' . $this->ps_customer['telefone'] . '">';
+        if($this->ps_customer['email'])$f[] = '<input type="hidden" name="senderEmail" value="' . $this->ps_customer['email'] . '">';
 
         // <!-- Informações de frete (opcionais) -->  
-        $f[] = '<input type="hidden" name="shippingType" value="' . $this->this_user['shippingType'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressPostalCode" value="' . $this->this_user['cep'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressStreet" value="' . $this->this_user['logradouro'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressNumber" value="' . $this->this_user['numero'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressComplement" value="' . $this->this_user['compl'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressDistrict" value="' . $this->this_user['bairro'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressCity" value="' . $this->this_user['cidade'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressState" value="' . $this->this_user['uf'] . '">';
-        $f[] = '<input type="hidden" name="shippingAddressCountry" value="' . $this->this_user['pais'] . '">';
+        if($this->ps_customer['shippingType'])$f[] = '<input type="hidden" name="shippingType" value="' . $this->ps_customer['shippingType'] . '">';
+        if($this->ps_customer['cep'])$f[] = '<input type="hidden" name="shippingAddressPostalCode" value="' . $this->ps_customer['cep'] . '">';
+        if($this->ps_customer['logradouro'])$f[] = '<input type="hidden" name="shippingAddressStreet" value="' . $this->ps_customer['logradouro'] . '">';
+        if($this->ps_customer['numero'])$f[] = '<input type="hidden" name="shippingAddressNumber" value="' . $this->ps_customer['numero'] . '">';
+        if($this->ps_customer['compl'])$f[] = '<input type="hidden" name="shippingAddressComplement" value="' . $this->ps_customer['compl'] . '">';
+        if($this->ps_customer['bairro'])$f[] = '<input type="hidden" name="shippingAddressDistrict" value="' . $this->ps_customer['bairro'] . '">';
+        if($this->ps_customer['cidade'])$f[] = '<input type="hidden" name="shippingAddressCity" value="' . $this->ps_customer['cidade'] . '">';
+        if($this->ps_customer['uf'])$f[] = '<input type="hidden" name="shippingAddressState" value="' . $this->ps_customer['uf'] . '">';
+        if($this->ps_customer['pais'])$f[] = '<input type="hidden" name="shippingAddressCountry" value="' . $this->ps_customer['pais'] . '">';
 
         return implode("\n", $f);
-    }
-
-    /**
-     * Recebe o array com um produto, ou array multi com vários
-     * Campos:
-     *      id
-     *      descricao
-     *      valor
-     *      quantidade
-     *      peso
-     * @param array $product_array
-     */
-    public function setProducts($product_array)
-    {
-
-        if (!is_array($product_array)) {
-            log_message('error', 'set_products() Não existem produtos para PagSeguro');
-            return FALSE;
-        }
-
-        // verifica se é um único produto, ou multi array
-        if (isset($product_array[0]) && is_array($product_array[0])) {
-            // já é multi array... vários produtos
-            $this->ps_cart = $product_array;
-        } else {
-            // um único produto
-            $this->ps_cart = array($product_array);
-        }
     }
 
     /**
