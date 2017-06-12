@@ -78,7 +78,7 @@ class PagSeguro
      * @param int $reference Código de referência da venda.
      * @throws Exception Caso a referência fique em branco.
      */
-    public function setReference(int $reference = null)
+    public function setReference($reference = null)
     {
         if ($reference == null)
             throw new Exception('A referência não pode ficar em branco.');
