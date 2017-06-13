@@ -51,7 +51,7 @@ try {
     
     $botao = $ps->getButton();
 	
-	echo $botao;
+    echo $botao;
     
 } catch (Exception $error) {
     echo $error->getMessage();
@@ -76,7 +76,7 @@ try {
     var_dump($resultado);
     
 } catch (Exception $error) {
-	echo $error->getMessage();
+    echo $error->getMessage();
 }
 
 ```
@@ -98,7 +98,7 @@ try {
     var_dump($resultado);
     
 } catch (Exception $error) {
-	echo $error->getMessage();
+    echo $error->getMessage();
 }
 
 ```
@@ -121,26 +121,26 @@ use elieldepaula\pagseguro\PagSeguro;
 
 if (count($_POST) > 0) {
 
-	try {
-	
-	    $ps = new PagSeguro();
-	    $ps->setCredentials(['email'=>'mail@dominio.com', 'token'=>'N0N0N0']);
-	    
-	    $notificationType = (isset($_POST['notificationType']) && $_POST['notificationType'] != '') ? $_POST['notificationType'] : FALSE;
+    try {
+
+        $ps = new PagSeguro();
+        $ps->setCredentials(['email'=>'mail@dominio.com', 'token'=>'N0N0N0']);
+
+        $notificationType = (isset($_POST['notificationType']) && $_POST['notificationType'] != '') ? $_POST['notificationType'] : FALSE;
         $notificationCode = (isset($_POST['notificationCode']) && $_POST['notificationCode'] != '') ? $_POST['notificationCode'] : FALSE;
-       
-	    $resultado = $ps->findByNotification($_POST['notificationCode']);
-	    
-	    var_dump($resultado);
-	    
-	    // Exemplo: $resultado->reference;
-	    
-	} catch (Exception $error) {
-		echo $error->getMessage();
-	}
+
+        $resultado = $ps->findByNotification($_POST['notificationCode']);
+
+        var_dump($resultado);
+
+        // Exemplo: $resultado->reference;
+
+    } catch (Exception $error) {
+        echo $error->getMessage();
+    }
 
 } else {
-	echo "Nenhum POST foi recebido.";
+    echo "Nenhum POST foi recebido.";
 }
     
 ```
