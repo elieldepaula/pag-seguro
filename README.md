@@ -126,10 +126,9 @@ if (count($_POST) > 0) {
         $ps = new PagSeguro();
         $ps->setCredentials(['email'=>'mail@dominio.com', 'token'=>'N0N0N0']);
 
-        $notificationType = (isset($_POST['notificationType']) && $_POST['notificationType'] != '') ? $_POST['notificationType'] : FALSE;
         $notificationCode = (isset($_POST['notificationCode']) && $_POST['notificationCode'] != '') ? $_POST['notificationCode'] : FALSE;
 
-        $resultado = $ps->findByNotification($_POST['notificationCode']);
+        $resultado = $ps->findByNotification($notificationCode);
 
         var_dump($resultado);
 
