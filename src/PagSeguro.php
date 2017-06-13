@@ -16,37 +16,37 @@ class PagSeguro
      * Email da conta do PagSeguro.
      * @var string
      */
-    private $ps_email = '';
+    private $psEmail = '';
 
     /**
      * Token de integração do PagSeguro.
      * @var string
      */
-    private $ps_token = '';
+    private $psToken = '';
 
     /**
      * Url do PagSeguro.
      * @var string
      */
-    private $ps_url = 'sandbox.pagseguro.uol.com.br';
+    private $psUrl = 'sandbox.pagseguro.uol.com.br';
 
     /**
      * Link da imagem do botão de pagamento.
      * @var string
      */
-    private $ps_imgbotao = 'https://p.simg.uol.com.br/out/pagseguro/i/botoes/pagamentos/164x37-pagar-assina.gif';
+    private $psImgBotao = 'https://p.simg.uol.com.br/out/pagseguro/i/botoes/pagamentos/164x37-pagar-assina.gif';
 
     /**
      * Array de produtos.
      * @var array
      */
-    private $ps_products = array();
+    private $psProducts = array();
 
     /**
      * Array com os dados do cliente.
      * @var array
      */
-    private $ps_customer = array(
+    private $psCustomer = array(
         'id' => false,
         'nome' => false,
         'ddd' => false, // só números
@@ -67,7 +67,7 @@ class PagSeguro
      * Array com os status disponíveis para as transações.
      * @var array
      */
-    private $ps_status = array(
+    private $psStatus = array(
         0 => 'desconhecido',
         1 => 'Aguardando pagamento',
         2 => 'Em análise',
@@ -82,7 +82,7 @@ class PagSeguro
      * Código de referência da transaçao.
      * @var string
      */
-    private $ps_reference = '';
+    private $psReference = '';
 
     /**
      * Seta os dados da credencial da conta do PagSeguro. Ppor padrão as credenciais
@@ -104,11 +104,11 @@ class PagSeguro
             throw new Exception('As credenciais não podemm ficar em branco ou estãao incorretas.');
 
         if ($sandbox == true)
-            $this->ps_url = 'sandbox.pagseguro.uol.com.br';
+            $this->psUrl = 'sandbox.pagseguro.uol.com.br';
         else
-            $this->ps_url = 'pagseguro.uol.com.br';
-        $this->ps_email = $dados['email'];
-        $this->ps_token = $dados['token'];
+            $this->psUrl = 'pagseguro.uol.com.br';
+        $this->psEmail = $dados['email'];
+        $this->psToken = $dados['token'];
     }
 
     /**
@@ -121,7 +121,7 @@ class PagSeguro
     {
         if ($reference == null)
             throw new Exception('A referência não pode ficar em branco.');
-        $this->ps_reference = $reference;
+        $this->psReference = $reference;
     }
 
     /**
@@ -131,7 +131,7 @@ class PagSeguro
      */
     public function setImageButon($imageUrl)
     {
-        $this->ps_imgbotao = $imageUrl;
+        $this->psImgBotao = $imageUrl;
     }
 
     /**
@@ -144,9 +144,9 @@ class PagSeguro
     public function setCustomer($data = array())
     {
         $data = $this->parserCustomer($data);
-        foreach ($this->ps_customer as $key => $val) {
+        foreach ($this->psCustomer as $key => $val) {
             if (isset($data[$key]))
-                $this->ps_customer[$key] = $data[$key];
+                $this->psCustomer[$key] = $data[$key];
         }
     }
 
@@ -166,9 +166,9 @@ class PagSeguro
         if (!is_array($data))
             throw new Exception('Nenhum produto foi informado.');
         if (isset($data[0]) && is_array($data[0]))
-            $this->ps_products = $data;
+            $this->psProducts = $data;
         else
-            $this->ps_products = array($data);
+            $this->psProducts = array($data);
     }
 
     /**
@@ -178,7 +178,7 @@ class PagSeguro
      */
     public function getCustomer()
     {
-        return $this->ps_customer;
+        return $this->psCustomer;
     }
 
     /**
@@ -190,7 +190,7 @@ class PagSeguro
      */
     public function findByNotification($notificationCode = null)
     {
-        $url = 'https://ws.' . $this->ps_url . '/v2/transactions/notifications/' . $notificationCode . '?email=' . $this->ps_email . '&token=' . $this->ps_token;
+        $url = 'https://ws.' . $this->psUrl . '/v2/transactions/notifications/' . $notificationCode . '?email=' . $this->psEmail . '&token=' . $this->psToken;
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -214,7 +214,7 @@ class PagSeguro
     {
         if ($transactionCode === null)
             $transactionCode = $_POST['notificationCode'];
-        $url = 'https://ws.' . $this->ps_url . '/v2/transactions/' . $transactionCode . '?email=' . $this->ps_email . '&token=' . $this->ps_token;
+        $url = 'https://ws.' . $this->psUrl . '/v2/transactions/' . $transactionCode . '?email=' . $this->psEmail . '&token=' . $this->psToken;
         $options = Array(
             CURLOPT_HTTPHEADER => Array(
                 "Content-Type: application/x-www-form-urlencoded; charset=UTF-8",
@@ -249,7 +249,7 @@ class PagSeguro
      */
     public function getStatus($status = 0)
     {
-        return $this->ps_status[$status];
+        return $this->psStatus[$status];
     }
 
     /**
@@ -260,7 +260,7 @@ class PagSeguro
      */
     public function getButton()
     {
-        if ($this->ps_reference === false && !is_numeric($this->ps_reference))
+        if ($this->psReference === false && !is_numeric($this->psReference))
             throw new Exception('Erro ao gerar o botão: Linha 315');
         $button = $this->getFormOpen();
         $button .= $this->getCustomerInputs();
@@ -308,32 +308,32 @@ class PagSeguro
     private function getCustomerInputs()
     {
         $out = array();
-        if ($this->ps_customer['nome'])
-            $out[] = '<input type="hidden" name="senderName" value="' . $this->ps_customer['nome'] . '">';
-        if ($this->ps_customer['ddd'])
-            $out[] = '<input type="hidden" name="senderAreaCode" value="' . $this->ps_customer['ddd'] . '">';
-        if ($this->ps_customer['telefone'])
-            $out[] = '<input type="hidden" name="senderPhone" value="' . $this->ps_customer['telefone'] . '">';
-        if ($this->ps_customer['email'])
-            $out[] = '<input type="hidden" name="senderEmail" value="' . $this->ps_customer['email'] . '">';
-        if ($this->ps_customer['shippingType'])
-            $out[] = '<input type="hidden" name="shippingType" value="' . $this->ps_customer['shippingType'] . '">';
-        if ($this->ps_customer['cep'])
-            $out[] = '<input type="hidden" name="shippingAddressPostalCode" value="' . $this->ps_customer['cep'] . '">';
-        if ($this->ps_customer['logradouro'])
-            $out[] = '<input type="hidden" name="shippingAddressStreet" value="' . $this->ps_customer['logradouro'] . '">';
-        if ($this->ps_customer['numero'])
-            $out[] = '<input type="hidden" name="shippingAddressNumber" value="' . $this->ps_customer['numero'] . '">';
-        if ($this->ps_customer['compl'])
-            $out[] = '<input type="hidden" name="shippingAddressComplement" value="' . $this->ps_customer['compl'] . '">';
-        if ($this->ps_customer['bairro'])
-            $out[] = '<input type="hidden" name="shippingAddressDistrict" value="' . $this->ps_customer['bairro'] . '">';
-        if ($this->ps_customer['cidade'])
-            $out[] = '<input type="hidden" name="shippingAddressCity" value="' . $this->ps_customer['cidade'] . '">';
-        if ($this->ps_customer['uf'])
-            $out[] = '<input type="hidden" name="shippingAddressState" value="' . $this->ps_customer['uf'] . '">';
-        if ($this->ps_customer['pais'])
-            $out[] = '<input type="hidden" name="shippingAddressCountry" value="' . $this->ps_customer['pais'] . '">';
+        if ($this->psCustomer['nome'])
+            $out[] = '<input type="hidden" name="senderName" value="' . $this->psCustomer['nome'] . '">';
+        if ($this->psCustomer['ddd'])
+            $out[] = '<input type="hidden" name="senderAreaCode" value="' . $this->psCustomer['ddd'] . '">';
+        if ($this->psCustomer['telefone'])
+            $out[] = '<input type="hidden" name="senderPhone" value="' . $this->psCustomer['telefone'] . '">';
+        if ($this->psCustomer['email'])
+            $out[] = '<input type="hidden" name="senderEmail" value="' . $this->psCustomer['email'] . '">';
+        if ($this->psCustomer['shippingType'])
+            $out[] = '<input type="hidden" name="shippingType" value="' . $this->psCustomer['shippingType'] . '">';
+        if ($this->psCustomer['cep'])
+            $out[] = '<input type="hidden" name="shippingAddressPostalCode" value="' . $this->psCustomer['cep'] . '">';
+        if ($this->psCustomer['logradouro'])
+            $out[] = '<input type="hidden" name="shippingAddressStreet" value="' . $this->psCustomer['logradouro'] . '">';
+        if ($this->psCustomer['numero'])
+            $out[] = '<input type="hidden" name="shippingAddressNumber" value="' . $this->psCustomer['numero'] . '">';
+        if ($this->psCustomer['compl'])
+            $out[] = '<input type="hidden" name="shippingAddressComplement" value="' . $this->psCustomer['compl'] . '">';
+        if ($this->psCustomer['bairro'])
+            $out[] = '<input type="hidden" name="shippingAddressDistrict" value="' . $this->psCustomer['bairro'] . '">';
+        if ($this->psCustomer['cidade'])
+            $out[] = '<input type="hidden" name="shippingAddressCity" value="' . $this->psCustomer['cidade'] . '">';
+        if ($this->psCustomer['uf'])
+            $out[] = '<input type="hidden" name="shippingAddressState" value="' . $this->psCustomer['uf'] . '">';
+        if ($this->psCustomer['pais'])
+            $out[] = '<input type="hidden" name="shippingAddressCountry" value="' . $this->psCustomer['pais'] . '">';
         return implode("\n", $out);
     }
 
@@ -344,18 +344,18 @@ class PagSeguro
      */
     private function getProductsInputs()
     {
-        if ($this->ps_products === false)
+        if ($this->psProducts === false)
             return false;
-        $ttl = count($this->ps_products);
+        $ttl = count($this->psProducts);
         $out = array();
         for ($x = 0; $x < $ttl; $x++)
         {
             $id = $x + 1;
-            $itemId = $this->ps_products[$x]['id'];
-            $itemDescription = $this->ps_products[$x]['descricao'];
-            $itemAmount = $this->ps_products[$x]['valor'];
-            $itemQuantity = $this->ps_products[$x]['quantidade'];
-            $itemWeight = $this->ps_products[$x]['peso'];
+            $itemId = $this->psProducts[$x]['id'];
+            $itemDescription = $this->psProducts[$x]['descricao'];
+            $itemAmount = $this->psProducts[$x]['valor'];
+            $itemQuantity = $this->psProducts[$x]['quantidade'];
+            $itemWeight = $this->psProducts[$x]['peso'];
             $out[] = '<input type="hidden" name="itemId' . $id . '" value="' . $itemId . '">';
             $out[] = '<input type="hidden" name="itemDescription' . $id . '" value="' . $itemDescription . '">';
             $out[] = '<input type="hidden" name="itemAmount' . $id . '" value="' . $itemAmount . '">';
@@ -373,11 +373,11 @@ class PagSeguro
     private function getFormOpen()
     {
         $out = array();
-        $out[] = '<form target="pagseguro" method="post" action="https://' . $this->ps_url . '/v2/checkout/payment.html">';
-        $out[] = '<input type="hidden" name="receiverEmail" value="' . $this->ps_email . '">';
+        $out[] = '<form target="pagseguro" method="post" action="https://' . $this->psUrl . '/v2/checkout/payment.html">';
+        $out[] = '<input type="hidden" name="receiverEmail" value="' . $this->psEmail . '">';
         $out[] = '<input type="hidden" name="currency" value="BRL">';
         $out[] = '<input type="hidden" name="encoding" value="UTF-8">';
-        $out[] = '<input type="hidden" name="reference" value="' . $this->ps_reference . '">';
+        $out[] = '<input type="hidden" name="reference" value="' . $this->psReference . '">';
         return implode("\n", $out);
     }
 
@@ -389,7 +389,7 @@ class PagSeguro
     private function getFormClose()
     {
         $out = array();
-        $out[] = '<input type="image" name="submit" src="' . $this->ps_imgbotao . '" alt="Pague com PagSeguro">';
+        $out[] = '<input type="image" name="submit" src="' . $this->psImgBotao . '" alt="Pague com PagSeguro">';
         $out[] = '</form>';
         return implode("\n", $out);
     }
