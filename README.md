@@ -9,7 +9,6 @@ Adicione no seu arquivo composer.json:
 
 ``` json
 "require": {
-    ...
     "elieldepaula/pagseguro":"dev-master"
 }
 ```
